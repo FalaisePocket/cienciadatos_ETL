@@ -1,0 +1,14 @@
+OperationalDB:
+  Type: postgresql  # Puedes omitir esto si no necesitas conexión a la base de datos operativa
+  Server: localhost
+  Database: rapidosyfuriosos
+  Driver: ODBC Driver 17 for SQL Server  # o el driver ODBC que corresponda a tu instalación de SQL Server
+  User: Dani
+  Password: invitado
+
+ETLDB:
+  Type: postgresql
+  Server: localhost  # Localhost indica que la base de datos está en el mismo equipo
+  Database: etl
+  User: Dani
+  Password: invitado
