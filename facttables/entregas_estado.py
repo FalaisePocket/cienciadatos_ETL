@@ -1,6 +1,11 @@
-'''import pandas as pd
+import pandas as pd
 from connection_script import connect_databases
 from datetime import datetime
+
+###mensajeria_estado???
+##mensajeria_estadoservicio
+##mensajeria_tiposervicio????
+##mensajeria_servicio
 
 
 
@@ -132,4 +137,3 @@ result.to_sql('FactInternetSales', db_etl, if_exists='replace', index=False)
 
 
 
-'''
