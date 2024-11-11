@@ -78,25 +78,6 @@ facttable=facttable[['id','servicio_id','mensajero_id',
                      'fecha','hora']]
 
 print(facttable.columns)
-'''
-# Realizar el merge entre ambas tablas
-servicio_con_tipo = mensajeria_servicio.merge(
-    mensajeria_tiposervicio,
-    left_on='tipo_servicio_id',
-    right_on='tipo_servicio_id',
-    how='left'
-)
-
-
-
-
-estados_servicios = mensajeria_estadosservicio.merge(
-    mensajeria_servicio,
-    left_on='id',
-    right_on='servicio_id',
-    how='left'
-)
-'''
 
 
 
