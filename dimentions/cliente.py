@@ -39,21 +39,6 @@ cliente_ciudad = cliente_ciudad.drop(columns='ciudad_id')
 print(cliente_ciudad.head())
 
 
-'''
-
-result = result.drop_duplicates(subset=['BusinessEntityID'])
-
-
-
-
-result = result[['CustomerKey', 'GeographyKey', 'CustomerAlternateKey','Title', 'FirstName', 'MiddleName', 'LastName', 'NameStyle', 'BirthDate', 
-                       'MaritalStatus', 'Suffix', 'Gender', 'EmailAddress', 'YearlyIncome', 
-                       'TotalChildren', 'NumberChildrenAtHome', 'EnglishEducation', 'EnglishOccupation', 
-                       'HouseOwnerFlag', 'NumberCarsOwned', 'AddressLine1', 'AddressLine2', 
-                       'Phone', 'DateFirstPurchase']]
-
-
-'''
 #####################Load####################################################
 #######################################################################
 

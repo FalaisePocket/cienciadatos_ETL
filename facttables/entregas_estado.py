@@ -1,11 +1,9 @@
 import pandas as pd
-from connection_script import connect_databases
-from datetime import datetime
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from connect import connect_databases
 
-###mensajeria_estado???
-##mensajeria_estadoservicio
-##mensajeria_tiposervicio????
-##mensajeria_servicio
 
 
 
@@ -16,123 +14,89 @@ db_op, db_etl = connect_databases()
 #Extract
 
 
-# Extract required data
-# Sales online orders
-sales_order = pd.read_sql_query("""
-        SELECT *,[dbo].[ufnGetProductStandardCost](t2.ProductID, t1.OrderDate) AS ProductStandardCost
-        FROM Sales.SalesOrderHeader AS t1
-        INNER JOIN Sales.SalesOrderDetail AS t2
-        ON t1.SalesOrderID = t2.SalesOrderID
-        WHERE t1.OnlineOrderFlag = 1;
-        """, db_op)
-sales_order = sales_order.loc[:,~sales_order.columns.duplicated()]
-sales_order
+###mensajeria_estado???
+##mensajeria_estadoservicio
+##mensajeria_tiposervicio????
+##mensajeria_servicio
 
 
-# Load required dimensions
-dim_product =  pd.read_sql_query('SELECT * FROM "DimProduct";', db_etl)
-dim_product
-
-operational_products = pd.read_sql_query('SELECT ProductID, ProductNumber FROM [Production].[Product];', db_op)
-
-dim_product = dim_product.merge(operational_products, left_on="ProductAlternateKey", right_on="ProductNumber")
-dim_product = dim_product.drop_duplicates(subset=["ProductID"])
-
-dim_customer = pd.read_sql_query('SELECT * FROM "DimCustomer";', db_etl)
-
-dim_promotion = pd.read_sql_query('SELECT * FROM "DimPromotion";', db_etl)
-
-dim_sales_territory = pd.read_sql_query('SELECT * FROM "DimSalesTerritory";', db_etl)
+mensajeria_estado =  pd.read_sql_query('SELECT * FROM public.mensajeria_estado', db_op)
+mensajeria_estadosservicio =  pd.read_sql_query('SELECT * FROM public.mensajeria_estadosservicio', db_op)
+mensajeria_tiposervicio =  pd.read_sql_query('SELECT * FROM public.mensajeria_tiposervicio', db_op)
+mensajeria_servicio =  pd.read_sql_query('SELECT * FROM public.mensajeria_servicio', db_op)
 
 
-dim_dates = pd.read_sql_query('SELECT * FROM "DimDate";', db_etl)
+dimciudad =  pd.read_sql_query('SELECT * FROM public."DimCiudad"', db_etl)
+dimcliente =  pd.read_sql_query('SELECT * FROM public."DimCliente"', db_etl)
+dimsede =  pd.read_sql_query('SELECT * FROM public."DimSede"', db_etl)
 
 
-dim_currency = pd.read_sql_query('SELECT * FROM "DimCurrency";', db_etl)
 
-currency_rate = pd.read_sql_query('SELECT CurrencyRateID, ToCurrencyCode FROM [Sales].[CurrencyRate]', db_op)
-
-sales_order = sales_order.merge(currency_rate, on="CurrencyRateID", how="left")
-sales_order["ToCurrencyCode"] = sales_order["ToCurrencyCode"].apply(lambda x: 'USD' if pd.isna(x) else x )
-
-
-sales_order = sales_order.merge(dim_currency, left_on="ToCurrencyCode", right_on="CurrencyAlternateKey")
-
-sales_order = sales_order.drop(columns=["ToCurrencyCode", "CurrencyAlternateKey", "CurrencyRateID"])
-
-sales_order["OrderDate"] = sales_order["OrderDate"].apply(lambda x: datetime.strftime(x, '%Y-%m-%d'))
-sales_order["DueDate"] = sales_order["DueDate"].apply(lambda x: datetime.strftime(x, '%Y-%m-%d'))
-sales_order["ShipDate"] = sales_order["ShipDate"].apply(lambda x: datetime.strftime(x, '%Y-%m-%d'))
+###hecho    
+mensajeria_estadosservicio=mensajeria_estadosservicio[['id'
+                                                       ,'fecha','hora',
+                                                       'estado_id','servicio_id'
+                                                       ]]
+mensajeria_servicio=mensajeria_servicio[['id','cliente_id','mensajero_id',
+                                         'tipo_servicio_id']]
+mensajeria_tiposervicio=mensajeria_tiposervicio[['id', 'nombre',]]
+mensajeria_estado=mensajeria_estado[['id','nombre']]
 
 
-#####Transform##########################
-
-sales_order = sales_order.merge(dim_product, left_on="ProductID", right_on="ProductID")
-
-
-sales_order = sales_order.merge(dim_customer, left_on="CustomerID", right_on="CustomerKey")
-
-sales_order = sales_order.merge(dim_promotion, left_on="SpecialOfferID", right_on="PromotionKey")
-
-sales_order = sales_order.merge(dim_sales_territory, left_on="TerritoryID", right_on="SalesTerritoryKey")
-
-sales_order = sales_order.merge(dim_dates.rename(columns={'DateKey':'OrderDateKey'}), left_on="OrderDate", right_on="FullDateAlternateKey")
-sales_order = sales_order.merge(dim_dates.rename(columns={'DateKey':'DueDateKey'}), left_on="DueDate", right_on="FullDateAlternateKey")
-sales_order = sales_order.merge(dim_dates.rename(columns={'DateKey':'ShipDateKey'}), left_on="ShipDate", right_on="FullDateAlternateKey")
-
-sales_order.info(verbose=True)
-
-sales_order = sales_order.rename(columns={
-    "OrderQty":"OrderQuantity",
-    "DiscountPct":"UnitPriceDiscountPct",
-    "ToCurrencyCode":"CurrencyKey",
-    "PurchaseOrderNumber":"CustomerPONumber",
-})
-
-quantity_unitprice = zip(list(sales_order["OrderQuantity"]), list(sales_order["UnitPrice"]))
-sales_order = sales_order.assign(ExtendedAmount=[x*y for x, y in quantity_unitprice])
+####mensajeria_estado
+mensajeria_tiposervicio = mensajeria_tiposervicio.rename(columns={'id': 'tipo_servicio_id','nombre': 'tipo_servicio'})
+mensajeria_servicio= mensajeria_servicio.rename(columns={'id': 'servicio_id'})
+mensajeria_estadosservicio=mensajeria_estadosservicio.rename(columns={'id':'estadosservicios_id'})
+mensajeria_estado=mensajeria_estado.rename(columns={'id':'estado_id','nombre': 'estado_nombre'})
 
 
-discountpct_discountamount = zip(list(sales_order["ExtendedAmount"]), list(sales_order["UnitPriceDiscountPct"]))
-sales_order = sales_order.assign(DiscountAmount=[x*y for x, y in discountpct_discountamount])
+facttable=mensajeria_estadosservicio.merge(
+    mensajeria_servicio,
+    left_on='servicio_id',
+    right_on='servicio_id',
+    how='left')
 
-total_product_cost = zip(list(sales_order["OrderQuantity"]), list(sales_order["ProductStandardCost"]))
-sales_order = sales_order.assign(TotalProductCost=[x*y for x, y in total_product_cost])
+facttable=facttable.merge(
+    mensajeria_tiposervicio,
+    left_on='tipo_servicio_id',
+    right_on='tipo_servicio_id',
+    how='left'   
+)
 
-sales_order = sales_order.assign(SalesAmount=list(sales_order["ExtendedAmount"]))
-
-sales_order['SalesOrderLineNumber'] = sales_order.groupby(['SalesOrderID']).cumcount() + 1
-
-
-result = sales_order[[
-                    "ProductKey",
-                    "OrderDateKey",
-                      "DueDateKey",
-                      "ShipDateKey",
-                      "CustomerKey", "PromotionKey",
-                      "CurrencyKey",
-                      "SalesTerritoryKey",
-                      "SalesOrderNumber",
-                      "SalesOrderLineNumber",
-                      "RevisionNumber",
-                      "OrderQuantity",
-                      "UnitPrice",
-                      "ExtendedAmount",
-                      "UnitPriceDiscountPct",
-                      "DiscountAmount",
-                      "ProductStandardCost",
-                      "TotalProductCost",
-                      "SalesAmount",
-                      "TaxAmt",
-                      "Freight",
-                      "CarrierTrackingNumber",
-                      "CustomerPONumber", 
-                      "OrderDate", "DueDate", "ShipDate"
-                     ]]
+facttable=facttable.merge(
+    mensajeria_estado,
+    left_on='estado_id',
+    right_on='estado_id',
+    how='left'
+)
 
 
-db_op, db_etl = connect_databases()
-result.to_sql('FactInternetSales', db_etl, if_exists='replace', index=False)
+
+facttable=facttable.rename(columns={'estadosservicios_id':'id'})
+facttable=facttable[['id','servicio_id','mensajero_id',
+                     'tipo_servicio','estado_nombre',
+                     'fecha','hora']]
+
+print(facttable.columns)
+'''
+# Realizar el merge entre ambas tablas
+servicio_con_tipo = mensajeria_servicio.merge(
+    mensajeria_tiposervicio,
+    left_on='tipo_servicio_id',
+    right_on='tipo_servicio_id',
+    how='left'
+)
+
+
+
+
+estados_servicios = mensajeria_estadosservicio.merge(
+    mensajeria_servicio,
+    left_on='id',
+    right_on='servicio_id',
+    how='left'
+)
+'''
 
 
 

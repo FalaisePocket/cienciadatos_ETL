@@ -7,13 +7,13 @@ from connect import connect_databases
 
 db_op, db_etl = connect_databases()
 
-dim_currency = pd.read_sql_query('SELECT * FROM public.ciudad', db_op)
+dim_ciudad = pd.read_sql_query('SELECT * FROM public.ciudad', db_op)
 
 #####################Transform###########################################
 #########################################################################
 
 # Drop columns
-dim_currency = dim_currency.drop(columns='departamento_id')
+dim_ciudad = dim_ciudad.drop(columns='departamento_id')
 
 # Rename Columns
 
@@ -21,4 +21,4 @@ dim_currency = dim_currency.drop(columns='departamento_id')
 
 #############################Load######################################
 #######################################################################
-dim_currency.to_sql('DimCiudad', db_etl, if_exists='replace',index=False)
+dim_ciudad.to_sql('DimCiudad', db_etl, if_exists='replace',index=False)
