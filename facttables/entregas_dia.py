@@ -86,45 +86,5 @@ facttable=facttable.pivot(index='servicio_id', columns='estado_nombre')
 
 
 
+facttable.to_sql('FactEstados', db_etl, if_exists='replace', index=False)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''
-
-completados = facttable[facttable['estado_id'] == 6]
-
-# Agrupar por fecha y contar los servicios completados por día
-entregas_por_dia = completados.groupby('fecha').size()
-#.reset_index(name='cantidad_entregas')
-
-# Crear la tabla de hechos
-tabla_hechos = entregas_por_dia.rename(columns={'fecha': 'fecha_id'})
-
-# Crear la dimensión de fecha
-dimension_fecha = entregas_por_dia[['fecha']].drop_duplicates().reset_index(drop=True)
-dimension_fecha['fecha_id'] = dimension_fecha.index + 1  # Crear un ID único para cada fecha
-
-# Unir fecha_id en la tabla de hechos
-tabla_hechos = tabla_hechos.merge(dimension_fecha, left_on='fecha_id', right_on='fecha', how='left')
-tabla_hechos = tabla_hechos[['fecha_id', 'cantidad_entregas']]
-
-'''
