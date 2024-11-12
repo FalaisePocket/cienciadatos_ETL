@@ -77,7 +77,17 @@ facttable=facttable[['id','servicio_id','mensajero_id',
                      'tipo_servicio','estado_nombre',
                      'fecha','hora']]
 
-print(facttable.head())
+print(facttable.columns)
+
+facttable=facttable.drop(columns='id')
+
+facttable=facttable.pivot(index='servicio_id', columns='estado_nombre')
+
+
+
+
+
+
 
 
 

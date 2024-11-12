@@ -4,7 +4,7 @@ import os
 config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
 
 def connect_databases():
-    with open(config_path, 'r') as f:
+    with open(config_path, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
         
         # Configuración de la base de datos operativa
